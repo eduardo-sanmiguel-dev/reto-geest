@@ -8,7 +8,9 @@ Este repositorio contiene 3 proyectos:
 
 ## URL de pruebas
 
-- https://geest-prueba.com
+- ui: https://geest-prueba.com
+- api: https://api.geest-prueba.com
+- notify: https://notify.geest-prueba.com
 
 ## Requisitos
 
