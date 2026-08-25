@@ -6,7 +6,12 @@ export const validate = (
   source: "body" | "params" | "query" = "body",
 ) => {
   return (req: Request, _res: Response, next: NextFunction) => {
-    const parsed = schema.parse(req[source]);
+    const result = schema.safeParse(req[source]);
+    if (!result.success) {
+      return next(result.error);
+    }
+
+    const parsed = result.data;
 
     if (source === "query") {
       Object.assign(req.query, parsed);

@@ -1,4 +1,11 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  FormEvent,
+  KeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { api, mapApiError } from "./lib/api";
 import type {
   NotificationAttempt,
@@ -13,6 +20,7 @@ import type {
 type AsyncState = "idle" | "loading";
 type AppTab = "creacion" | "usuarios" | "asignacion";
 const PAGE_LIMIT = 10;
+const TAB_ORDER: AppTab[] = ["creacion", "usuarios", "asignacion"];
 
 const EMPTY_PAGINATION: PaginationMeta = {
   page: 1,
@@ -117,6 +125,11 @@ export default function App() {
   const [assignUserIds, setAssignUserIds] = useState<number[]>([]);
   const [completeUserId, setCompleteUserId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<AppTab>("creacion");
+  const tabRefs = useRef<Record<AppTab, HTMLButtonElement | null>>({
+    creacion: null,
+    usuarios: null,
+    asignacion: null,
+  });
 
   const canAssign = selectedTaskId !== null && assignUserIds.length > 0;
   const canComplete = selectedTaskId !== null && completeUserId !== null;
@@ -314,6 +327,32 @@ export default function App() {
     }
   };
 
+  const onTabKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    tab: AppTab,
+  ) => {
+    const currentIndex = TAB_ORDER.indexOf(tab);
+    if (currentIndex < 0) return;
+
+    let nextTab: AppTab | null = null;
+    if (event.key === "ArrowRight") {
+      nextTab = TAB_ORDER[(currentIndex + 1) % TAB_ORDER.length];
+    } else if (event.key === "ArrowLeft") {
+      nextTab =
+        TAB_ORDER[(currentIndex - 1 + TAB_ORDER.length) % TAB_ORDER.length];
+    } else if (event.key === "Home") {
+      nextTab = TAB_ORDER[0];
+    } else if (event.key === "End") {
+      nextTab = TAB_ORDER[TAB_ORDER.length - 1];
+    }
+
+    if (nextTab) {
+      event.preventDefault();
+      setActiveTab(nextTab);
+      tabRefs.current[nextTab]?.focus();
+    }
+  };
+
   return (
     <div className="page-shell">
       <header className="hero">
@@ -336,11 +375,20 @@ export default function App() {
 
       {flash && <div className={`flash ${flash.kind}`}>{flash.message}</div>}
 
-      <nav className="tabs" aria-label="Secciones principales">
+      <nav className="tabs" role="tablist" aria-label="Secciones principales">
         <button
           type="button"
           className={`tab-btn ${activeTab === "creacion" ? "active" : ""}`}
           onClick={() => setActiveTab("creacion")}
+          onKeyDown={(event) => onTabKeyDown(event, "creacion")}
+          ref={(element) => {
+            tabRefs.current.creacion = element;
+          }}
+          id="tab-creacion"
+          role="tab"
+          aria-selected={activeTab === "creacion"}
+          aria-controls="panel-creacion"
+          tabIndex={activeTab === "creacion" ? 0 : -1}
         >
           1. Creacion
         </button>
@@ -348,6 +396,15 @@ export default function App() {
           type="button"
           className={`tab-btn ${activeTab === "usuarios" ? "active" : ""}`}
           onClick={() => setActiveTab("usuarios")}
+          onKeyDown={(event) => onTabKeyDown(event, "usuarios")}
+          ref={(element) => {
+            tabRefs.current.usuarios = element;
+          }}
+          id="tab-usuarios"
+          role="tab"
+          aria-selected={activeTab === "usuarios"}
+          aria-controls="panel-usuarios"
+          tabIndex={activeTab === "usuarios" ? 0 : -1}
         >
           2. Usuarios y Tareas
         </button>
@@ -355,6 +412,15 @@ export default function App() {
           type="button"
           className={`tab-btn ${activeTab === "asignacion" ? "active" : ""}`}
           onClick={() => setActiveTab("asignacion")}
+          onKeyDown={(event) => onTabKeyDown(event, "asignacion")}
+          ref={(element) => {
+            tabRefs.current.asignacion = element;
+          }}
+          id="tab-asignacion"
+          role="tab"
+          aria-selected={activeTab === "asignacion"}
+          aria-controls="panel-asignacion"
+          tabIndex={activeTab === "asignacion" ? 0 : -1}
         >
           3. Asignacion y Operaciones
         </button>
@@ -362,7 +428,12 @@ export default function App() {
 
       <main className="modules-stack">
         {activeTab === "creacion" && (
-          <section className="module-block rise">
+          <section
+            className="module-block rise"
+            id="panel-creacion"
+            role="tabpanel"
+            aria-labelledby="tab-creacion"
+          >
             <p className="eyebrow">Seccion 1</p>
             <h2 className="module-title">Creacion de Usuarios y Tareas</h2>
             <p className="module-subtitle">
@@ -436,7 +507,12 @@ export default function App() {
         )}
 
         {activeTab === "usuarios" && (
-          <section className="module-block rise">
+          <section
+            className="module-block rise"
+            id="panel-usuarios"
+            role="tabpanel"
+            aria-labelledby="tab-usuarios"
+          >
             <p className="eyebrow">Seccion 2</p>
             <h2 className="module-title">Usuarios y Sus Tareas Asignadas</h2>
             <p className="module-subtitle">
@@ -522,7 +598,12 @@ export default function App() {
         )}
 
         {activeTab === "asignacion" && (
-          <section className="module-block rise section-ops">
+          <section
+            className="module-block rise section-ops"
+            id="panel-asignacion"
+            role="tabpanel"
+            aria-labelledby="tab-asignacion"
+          >
             <p className="eyebrow">Seccion 3</p>
             <h2 className="module-title">Asignacion de Usuarios a la Tarea</h2>
             <p className="module-subtitle">

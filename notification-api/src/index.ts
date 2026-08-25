@@ -1,6 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
-import { ZodError, z } from "zod";
+import { z } from "zod";
 
 dotenv.config();
 
@@ -31,32 +31,27 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-app.post("/notify", (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const payload = notificationSchema.parse(req.body);
-
-    // Log estructurado para trazabilidad de notificaciones entrantes.
-    console.log("[notification-api] payload recibido:", payload);
-
-    return res.status(200).json({
-      message: "Notificacion recibida y validada",
-    });
-  } catch (error) {
-    return next(error);
-  }
-});
-
-app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  if (err instanceof ZodError) {
+app.post("/notify", (req: Request, res: Response) => {
+  const result = notificationSchema.safeParse(req.body);
+  if (!result.success) {
     return res.status(400).json({
       error: {
         code: "VALIDATION_ERROR",
-        message: err.issues.map((issue) => issue.message).join("; "),
+        message: result.error.issues.map((issue) => issue.message).join("; "),
       },
     });
   }
 
-  if (err instanceof SyntaxError) {
+  // Log estructurado para trazabilidad de notificaciones entrantes.
+  console.log("[notification-api] payload recibido:", result.data);
+
+  return res.status(200).json({
+    message: "Notificacion recibida y validada",
+  });
+});
+
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof SyntaxError && "body" in err) {
     return res.status(400).json({
       error: {
         code: "INVALID_JSON",
