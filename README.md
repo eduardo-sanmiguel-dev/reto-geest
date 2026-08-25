@@ -11,6 +11,8 @@ Este repositorio contiene 3 proyectos:
 - ui: https://geest-prueba.com
 - api: https://api.geest-prueba.com
 - notify: https://notify.geest-prueba.com
+- api docs: https://api.geest-prueba.com/docs
+  Considerar que para probar la api con postman, deben de descargar la coleccion api/docs/geest.postman_collection.json apuntando a https://api.geest-prueba.com
 
 ## Requisitos
 
