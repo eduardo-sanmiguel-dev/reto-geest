@@ -2,9 +2,9 @@
 
 Este repositorio contiene 3 proyectos:
 
-- `api`: API principal (Express + TypeScript + PostgreSQL)
+- `api`: API principal (Node + Express + TypeScript + PostgreSQL)
 - `ui`: frontend (Vite + React + TypeScript)
-- `notification-api`: microservicio receptor de notificaciones
+- `notification-api`: (Node + Express + TypeScript) microservicio receptor de notificaciones
 
 ## URL de pruebas
 
