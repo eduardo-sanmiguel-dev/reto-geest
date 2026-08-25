@@ -11,6 +11,7 @@ import type {
 } from "./types";
 
 type AsyncState = "idle" | "loading";
+type AppTab = "creacion" | "usuarios" | "asignacion";
 const PAGE_LIMIT = 10;
 
 const EMPTY_PAGINATION: PaginationMeta = {
@@ -115,6 +116,7 @@ export default function App() {
   const [taskForm, setTaskForm] = useState({ title: "", description: "" });
   const [assignUserIds, setAssignUserIds] = useState<number[]>([]);
   const [completeUserId, setCompleteUserId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<AppTab>("creacion");
 
   const canAssign = selectedTaskId !== null && assignUserIds.length > 0;
   const canComplete = selectedTaskId !== null && completeUserId !== null;
@@ -334,320 +336,391 @@ export default function App() {
 
       {flash && <div className={`flash ${flash.kind}`}>{flash.message}</div>}
 
-      <main className="grid">
-        <section className="card rise">
-          <h2>Crear Usuario</h2>
-          <form onSubmit={onCreateUser} className="stack">
-            <input
-              placeholder="Nombre"
-              value={userForm.name}
-              onChange={(e) =>
-                setUserForm((v) => ({ ...v, name: e.target.value }))
-              }
-              required
-            />
-            <input
-              placeholder="Apellido"
-              value={userForm.lastName}
-              onChange={(e) =>
-                setUserForm((v) => ({ ...v, lastName: e.target.value }))
-              }
-              required
-            />
-            <input
-              placeholder="Correo electronico"
-              type="email"
-              value={userForm.email}
-              onChange={(e) =>
-                setUserForm((v) => ({ ...v, email: e.target.value }))
-              }
-              required
-            />
-            <button type="submit" disabled={busy === "loading"}>
-              Crear usuario
-            </button>
-          </form>
-        </section>
+      <nav className="tabs" aria-label="Secciones principales">
+        <button
+          type="button"
+          className={`tab-btn ${activeTab === "creacion" ? "active" : ""}`}
+          onClick={() => setActiveTab("creacion")}
+        >
+          1. Creacion
+        </button>
+        <button
+          type="button"
+          className={`tab-btn ${activeTab === "usuarios" ? "active" : ""}`}
+          onClick={() => setActiveTab("usuarios")}
+        >
+          2. Usuarios y Tareas
+        </button>
+        <button
+          type="button"
+          className={`tab-btn ${activeTab === "asignacion" ? "active" : ""}`}
+          onClick={() => setActiveTab("asignacion")}
+        >
+          3. Asignacion y Operaciones
+        </button>
+      </nav>
 
-        <section className="card rise delay-1">
-          <h2>Crear Tarea</h2>
-          <form onSubmit={onCreateTask} className="stack">
-            <input
-              placeholder="Titulo de la tarea"
-              value={taskForm.title}
-              onChange={(e) =>
-                setTaskForm((v) => ({ ...v, title: e.target.value }))
-              }
-              required
-            />
-            <textarea
-              placeholder="Descripcion (opcional)"
-              value={taskForm.description}
-              onChange={(e) =>
-                setTaskForm((v) => ({ ...v, description: e.target.value }))
-              }
-              rows={3}
-            />
-            <button type="submit" disabled={busy === "loading"}>
-              Crear tarea
-            </button>
-          </form>
-        </section>
-
-        <section className="card rise delay-2 wide">
-          <div className="row between">
-            <h2>Usuarios</h2>
-            <span className="meta">{usersPagination.total} total</span>
-          </div>
-          <PaginationControls
-            pagination={usersPagination}
-            onPrev={() => setUsersPage((prev) => Math.max(1, prev - 1))}
-            onNext={() => setUsersPage((prev) => prev + 1)}
-          />
-          <div className="list-panel">
-            {users.map((user) => (
-              <button
-                key={user.id}
-                className={`list-item ${selectedUserId === user.id ? "active" : ""}`}
-                onClick={() => void onSelectUser(user.id)}
-              >
-                <div>
-                  <strong>
-                    {user.name} {user.lastName}
-                  </strong>
-                  <p>{user.email}</p>
-                </div>
-                <span className="pill">
-                  Pendientes: {user.pendingTasks.length}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="card rise delay-3 wide">
-          <div className="row between">
-            <h2>Tareas</h2>
-            <select
-              value={taskStatusFilter}
-              onChange={(e) => {
-                setTasksPage(1);
-                setTaskStatusFilter(e.target.value as TaskStatus | "all");
-              }}
-            >
-              <option value="all">Todas</option>
-              <option value="open">Abiertas</option>
-              <option value="archived">Archivadas</option>
-            </select>
-          </div>
-
-          <PaginationControls
-            pagination={tasksPagination}
-            onPrev={() => setTasksPage((prev) => Math.max(1, prev - 1))}
-            onNext={() => setTasksPage((prev) => prev + 1)}
-          />
-
-          <div className="list-panel">
-            {tasks.map((task) => (
-              <button
-                key={task.id}
-                className={`list-item ${selectedTaskId === task.id ? "active" : ""}`}
-                onClick={() => void onSelectTask(task.id)}
-              >
-                <div>
-                  <strong>{task.title}</strong>
-                  <p>{task.description || "Sin descripcion"}</p>
-                </div>
-                <span className={`pill ${task.status}`}>
-                  {formatTaskStatus(task.status)}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="card rise delay-4 wide">
-          <h2>Tareas del Usuario Seleccionado</h2>
-          {!selectedUserTasks ? (
-            <p className="empty">
-              Selecciona un usuario para ver sus tareas asignadas.
+      <main className="modules-stack">
+        {activeTab === "creacion" && (
+          <section className="module-block rise">
+            <p className="eyebrow">Seccion 1</p>
+            <h2 className="module-title">Creacion de Usuarios y Tareas</h2>
+            <p className="module-subtitle">
+              Alta inicial de datos para comenzar a operar.
             </p>
-          ) : (
-            <>
-              <p className="meta">
-                {selectedUserTasks.user.name} {selectedUserTasks.user.lastName}
-              </p>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Tarea</th>
-                      <th>Estado</th>
-                      <th>Usuario completo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedUserTasks.tasks.map((task) => (
-                      <tr key={task.id}>
-                        <td>{task.title}</td>
-                        <td>{formatTaskStatus(task.status)}</td>
-                        <td>{task.userCompleted ? "Si" : "No"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <PaginationControls
-                pagination={userTasksPagination}
-                onPrev={() => setUserTasksPage((prev) => Math.max(1, prev - 1))}
-                onNext={() => setUserTasksPage((prev) => prev + 1)}
-              />
-            </>
-          )}
-        </section>
 
-        <section className="card rise delay-5 wide">
-          <h2>Operaciones de la Tarea Seleccionada</h2>
-          {!selectedTaskDetail ? (
-            <p className="empty">
-              Selecciona una tarea para ver detalles, asignar usuarios y marcar
-              finalizaciones.
-            </p>
-          ) : (
-            <div className="stack-lg">
-              <div className="row between">
-                <div>
-                  <h3>{selectedTaskDetail.title}</h3>
-                  <p className="meta">
-                    Archivada en: {formatDate(selectedTaskDetail.archivedAt)}
-                  </p>
-                </div>
-                <span className={`pill ${selectedTaskDetail.status}`}>
-                  {formatTaskStatus(selectedTaskDetail.status)}
-                </span>
-              </div>
-
-              <div className="row split">
-                <div>
-                  <p className="meta">Asignar usuarios</p>
-                  <div className="chips">
-                    {users.map((user) => {
-                      const checked = assignUserIds.includes(user.id);
-                      return (
-                        <label key={user.id} className="chip-check">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setAssignUserIds((prev) => [...prev, user.id]);
-                              } else {
-                                setAssignUserIds((prev) =>
-                                  prev.filter((id) => id !== user.id),
-                                );
-                              }
-                            }}
-                          />
-                          {user.name} {user.lastName}
-                        </label>
-                      );
-                    })}
-                  </div>
-                  <button
-                    onClick={() => void onAssignUsers()}
-                    disabled={!canAssign || busy === "loading"}
-                  >
-                    Asignar usuarios seleccionados
-                  </button>
-                </div>
-
-                <div>
-                  <p className="meta">Marcar finalizacion de usuario</p>
-                  <select
-                    value={completeUserId ?? ""}
+            <div className="grid module-grid">
+              <section className="card">
+                <h2>Crear Usuario</h2>
+                <form onSubmit={onCreateUser} className="stack">
+                  <input
+                    placeholder="Nombre"
+                    value={userForm.name}
                     onChange={(e) =>
-                      setCompleteUserId(
-                        e.target.value ? Number(e.target.value) : null,
-                      )
+                      setUserForm((v) => ({ ...v, name: e.target.value }))
                     }
-                  >
-                    <option value="">Selecciona usuario asignado</option>
-                    {currentTaskUsers.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} {user.lastName} (
-                        {user.completed ? "ya completo" : "pendiente"})
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => void onCompletePart()}
-                    disabled={!canComplete || busy === "loading"}
-                  >
-                    Completar parte del usuario
+                    required
+                  />
+                  <input
+                    placeholder="Apellido"
+                    value={userForm.lastName}
+                    onChange={(e) =>
+                      setUserForm((v) => ({ ...v, lastName: e.target.value }))
+                    }
+                    required
+                  />
+                  <input
+                    placeholder="Correo electronico"
+                    type="email"
+                    value={userForm.email}
+                    onChange={(e) =>
+                      setUserForm((v) => ({ ...v, email: e.target.value }))
+                    }
+                    required
+                  />
+                  <button type="submit" disabled={busy === "loading"}>
+                    Crear usuario
                   </button>
-                </div>
-              </div>
+                </form>
+              </section>
 
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Usuario</th>
-                      <th>Correo</th>
-                      <th>Completado</th>
-                      <th>Completado en</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedTaskDetail.users.map((u) => (
-                      <tr key={u.id}>
-                        <td>
-                          {u.name} {u.lastName}
-                        </td>
-                        <td>{u.email}</td>
-                        <td>{u.completed ? "Si" : "No"}</td>
-                        <td>{formatDate(u.completedAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <h4>Intentos de notificacion</h4>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Intento</th>
-                      <th>Fecha</th>
-                      <th>Estado HTTP</th>
-                      <th>Exito</th>
-                      <th>Error</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {taskNotifications.map((n) => (
-                      <tr key={n.id}>
-                        <td>{n.attemptNumber}</td>
-                        <td>{formatDate(n.timestamp)}</td>
-                        <td>{n.httpStatus ?? "-"}</td>
-                        <td>{n.success ? "Si" : "No"}</td>
-                        <td>{n.errorMessage ?? "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <PaginationControls
-                pagination={notificationsPagination}
-                onPrev={() =>
-                  setNotificationsPage((prev) => Math.max(1, prev - 1))
-                }
-                onNext={() => setNotificationsPage((prev) => prev + 1)}
-              />
+              <section className="card">
+                <h2>Crear Tarea</h2>
+                <form onSubmit={onCreateTask} className="stack">
+                  <input
+                    placeholder="Titulo de la tarea"
+                    value={taskForm.title}
+                    onChange={(e) =>
+                      setTaskForm((v) => ({ ...v, title: e.target.value }))
+                    }
+                    required
+                  />
+                  <textarea
+                    placeholder="Descripcion (opcional)"
+                    value={taskForm.description}
+                    onChange={(e) =>
+                      setTaskForm((v) => ({
+                        ...v,
+                        description: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                  />
+                  <button type="submit" disabled={busy === "loading"}>
+                    Crear tarea
+                  </button>
+                </form>
+              </section>
             </div>
-          )}
-        </section>
+          </section>
+        )}
+
+        {activeTab === "usuarios" && (
+          <section className="module-block rise">
+            <p className="eyebrow">Seccion 2</p>
+            <h2 className="module-title">Usuarios y Sus Tareas Asignadas</h2>
+            <p className="module-subtitle">
+              Consulta de usuarios y sus tareas relacionadas.
+            </p>
+
+            <div className="grid module-grid">
+              <section className="card">
+                <div className="row between">
+                  <h2>Usuarios</h2>
+                  <span className="meta">{usersPagination.total} total</span>
+                </div>
+                <PaginationControls
+                  pagination={usersPagination}
+                  onPrev={() => setUsersPage((prev) => Math.max(1, prev - 1))}
+                  onNext={() => setUsersPage((prev) => prev + 1)}
+                />
+                <div className="list-panel">
+                  {users.map((user) => (
+                    <button
+                      key={user.id}
+                      className={`list-item ${selectedUserId === user.id ? "active" : ""}`}
+                      onClick={() => void onSelectUser(user.id)}
+                    >
+                      <div>
+                        <strong>
+                          {user.name} {user.lastName}
+                        </strong>
+                        <p>{user.email}</p>
+                      </div>
+                      <span className="pill">
+                        Pendientes: {user.pendingTasks.length}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="card">
+                <h2>Tareas del Usuario Seleccionado</h2>
+                {!selectedUserTasks ? (
+                  <p className="empty">
+                    Selecciona un usuario para ver sus tareas asignadas.
+                  </p>
+                ) : (
+                  <>
+                    <p className="meta">
+                      {selectedUserTasks.user.name}{" "}
+                      {selectedUserTasks.user.lastName}
+                    </p>
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Tarea</th>
+                            <th>Estado</th>
+                            <th>Usuario completo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedUserTasks.tasks.map((task) => (
+                            <tr key={task.id}>
+                              <td>{task.title}</td>
+                              <td>{formatTaskStatus(task.status)}</td>
+                              <td>{task.userCompleted ? "Si" : "No"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <PaginationControls
+                      pagination={userTasksPagination}
+                      onPrev={() =>
+                        setUserTasksPage((prev) => Math.max(1, prev - 1))
+                      }
+                      onNext={() => setUserTasksPage((prev) => prev + 1)}
+                    />
+                  </>
+                )}
+              </section>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "asignacion" && (
+          <section className="module-block rise section-ops">
+            <p className="eyebrow">Seccion 3</p>
+            <h2 className="module-title">Asignacion de Usuarios a la Tarea</h2>
+            <p className="module-subtitle">
+              Seleccion de tareas y ejecucion de operaciones sobre la tarea
+              activa.
+            </p>
+
+            <div className="grid module-grid">
+              <section className="card wide section-ops-list-card">
+                <div className="row between task-filter-row">
+                  <h2>Tareas</h2>
+                  <select
+                    value={taskStatusFilter}
+                    onChange={(e) => {
+                      setTasksPage(1);
+                      setTaskStatusFilter(e.target.value as TaskStatus | "all");
+                    }}
+                  >
+                    <option value="all">Todas</option>
+                    <option value="open">Abiertas</option>
+                    <option value="archived">Archivadas</option>
+                  </select>
+                </div>
+
+                <PaginationControls
+                  pagination={tasksPagination}
+                  onPrev={() => setTasksPage((prev) => Math.max(1, prev - 1))}
+                  onNext={() => setTasksPage((prev) => prev + 1)}
+                />
+
+                <div className="list-panel">
+                  {tasks.map((task) => (
+                    <button
+                      key={task.id}
+                      className={`list-item ${selectedTaskId === task.id ? "active" : ""}`}
+                      onClick={() => void onSelectTask(task.id)}
+                    >
+                      <div>
+                        <strong>{task.title}</strong>
+                        <p>{task.description || "Sin descripcion"}</p>
+                      </div>
+                      <span className={`pill ${task.status}`}>
+                        {formatTaskStatus(task.status)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="card wide section-ops-detail-card">
+                <h2>Operaciones de la Tarea Seleccionada</h2>
+                {!selectedTaskDetail ? (
+                  <p className="empty">
+                    Selecciona una tarea para ver detalles, asignar usuarios y
+                    marcar finalizaciones.
+                  </p>
+                ) : (
+                  <div className="stack-lg">
+                    <div className="row between">
+                      <div>
+                        <h3>{selectedTaskDetail.title}</h3>
+                        <p className="meta">
+                          Archivada en:{" "}
+                          {formatDate(selectedTaskDetail.archivedAt)}
+                        </p>
+                      </div>
+                      <span className={`pill ${selectedTaskDetail.status}`}>
+                        {formatTaskStatus(selectedTaskDetail.status)}
+                      </span>
+                    </div>
+
+                    <div className="row split ops-actions-row">
+                      <div>
+                        <p className="meta">Asignar usuarios</p>
+                        <div className="chips">
+                          {users.map((user) => {
+                            const checked = assignUserIds.includes(user.id);
+                            return (
+                              <label key={user.id} className="chip-check">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setAssignUserIds((prev) => [
+                                        ...prev,
+                                        user.id,
+                                      ]);
+                                    } else {
+                                      setAssignUserIds((prev) =>
+                                        prev.filter((id) => id !== user.id),
+                                      );
+                                    }
+                                  }}
+                                />
+                                {user.name} {user.lastName}
+                              </label>
+                            );
+                          })}
+                        </div>
+                        <button
+                          onClick={() => void onAssignUsers()}
+                          disabled={!canAssign || busy === "loading"}
+                        >
+                          Asignar usuarios seleccionados
+                        </button>
+                      </div>
+
+                      <div>
+                        <p className="meta">Marcar finalizacion de usuario</p>
+                        <select
+                          value={completeUserId ?? ""}
+                          onChange={(e) =>
+                            setCompleteUserId(
+                              e.target.value ? Number(e.target.value) : null,
+                            )
+                          }
+                        >
+                          <option value="">Selecciona usuario asignado</option>
+                          {currentTaskUsers.map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {user.name} {user.lastName} (
+                              {user.completed ? "ya completo" : "pendiente"})
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => void onCompletePart()}
+                          disabled={!canComplete || busy === "loading"}
+                        >
+                          Completar parte del usuario
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Usuario</th>
+                            <th>Correo</th>
+                            <th>Completado</th>
+                            <th>Completado en</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedTaskDetail.users.map((u) => (
+                            <tr key={u.id}>
+                              <td>
+                                {u.name} {u.lastName}
+                              </td>
+                              <td>{u.email}</td>
+                              <td>{u.completed ? "Si" : "No"}</td>
+                              <td>{formatDate(u.completedAt)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <h4>Intentos de notificacion</h4>
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Intento</th>
+                            <th>Fecha</th>
+                            <th>Estado HTTP</th>
+                            <th>Exito</th>
+                            <th>Error</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {taskNotifications.map((n) => (
+                            <tr key={n.id}>
+                              <td>{n.attemptNumber}</td>
+                              <td>{formatDate(n.timestamp)}</td>
+                              <td>{n.httpStatus ?? "-"}</td>
+                              <td>{n.success ? "Si" : "No"}</td>
+                              <td>{n.errorMessage ?? "-"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <PaginationControls
+                      pagination={notificationsPagination}
+                      onPrev={() =>
+                        setNotificationsPage((prev) => Math.max(1, prev - 1))
+                      }
+                      onNext={() => setNotificationsPage((prev) => prev + 1)}
+                    />
+                  </div>
+                )}
+              </section>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
