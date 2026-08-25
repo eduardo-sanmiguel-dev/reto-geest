@@ -6,6 +6,10 @@ Este repositorio contiene 3 proyectos:
 - `ui`: frontend (Vite + React + TypeScript)
 - `notification-api`: microservicio receptor de notificaciones
 
+## URL de pruebas
+
+- https://geest-prueba.com
+
 ## Requisitos
 
 - Node.js 20+
