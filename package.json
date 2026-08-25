@@ -1,0 +1,15 @@
+{
+  "name": "reto-backend-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Orquestador de desarrollo para api, ui y notification-api",
+  "scripts": {
+    "install:all": "npm --prefix api install && npm --prefix ui install && npm --prefix notification-api install",
+    "dev": "concurrently -n api,ui,notify -c cyan,magenta,yellow \"npm --prefix api run dev\" \"npm --prefix ui run dev\" \"npm --prefix notification-api run dev\"",
+    "build": "npm --prefix api run build && npm --prefix ui run build && npm --prefix notification-api run build",
+    "test": "npm --prefix api test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
