@@ -1,0 +1,55 @@
+erDiagram
+    users {
+        int id PK
+        varchar_120 name
+        varchar_120 lastName
+        varchar_255 email UK
+        timestamptz createdAt
+    }
+
+    tasks {
+        int id PK
+        varchar_255 title
+        text description
+        enum status "open|archived"
+        timestamptz archivedAt
+        timestamptz createdAt
+        timestamptz updatedAt
+    }
+
+    task_assignments {
+        int id PK
+        int taskId FK
+        int userId FK
+        timestamptz completedAt
+        timestamptz createdAt
+        unique taskId_userId
+    }
+
+    notification_attempts {
+        int id PK
+        int taskId FK
+        int attemptNumber
+        int httpStatus
+        boolean success
+        text errorMessage
+        timestamptz createdAt
+    }
+
+    idempotency_keys {
+        int id PK
+        varchar_255 idempotencyKey
+        varchar_10 method
+        varchar_500 path
+        varchar_64 requestHash
+        enum status "in_progress|completed"
+        int statusCode
+        text responseBody
+        timestamptz createdAt
+        timestamptz updatedAt
+        unique idempotency_scope
+    }
+
+    users ||--o{ task_assignments : has
+    tasks ||--o{ task_assignments : has
+    tasks ||--o{ notification_attempts : has

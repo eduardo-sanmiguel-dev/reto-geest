@@ -1,0 +1,234 @@
+{
+  "info": {
+    "name": "GEEST API",
+    "description": "Collection para probar la API del reto GEEST.\n\nRequisitos:\n- Header x-api-key\n- Header Idempotency-Key en todos los POST\n\nLa colección guarda user1Id, user2Id y taskId automáticamente.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "apiKey", "value": "123" },
+    { "key": "idempotencyKey", "value": "{{$guid}}" },
+    { "key": "user1Id", "value": "" },
+    { "key": "user2Id", "value": "" },
+    { "key": "taskId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "x-api-key", "value": "{{apiKey}}" }],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "var body = pm.response.json();",
+                  "pm.collectionVariables.set('user1Id', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ana\",\n  \"lastName\": \"Lopez\",\n  \"email\": \"ana.geest+{{$timestamp}}@test.com\"\n}"
+            },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Create User 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "var body = pm.response.json();",
+                  "pm.collectionVariables.set('user2Id', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Luis\",\n  \"lastName\": \"Ramirez\",\n  \"email\": \"luis.geest+{{$timestamp}}@test.com\"\n}"
+            },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-api-key", "value": "{{apiKey}}" }],
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "User Tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-api-key", "value": "{{apiKey}}" }],
+            "url": "{{baseUrl}}/users/{{user1Id}}/tasks"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "var body = pm.response.json();",
+                  "pm.collectionVariables.set('taskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Implementar endpoint de pagos\",\n  \"description\": \"Coordinar backend y QA\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "Assign Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [{{user1Id}}, {{user2Id}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/{{taskId}}/assign"
+          }
+        },
+        {
+          "name": "Complete Task - User 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{user1Id}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks/{{taskId}}/complete"
+          }
+        },
+        {
+          "name": "Complete Task - User 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{user2Id}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks/{{taskId}}/complete"
+          }
+        },
+        {
+          "name": "List Tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-api-key", "value": "{{apiKey}}" }],
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "List Tasks By Status Open",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-api-key", "value": "{{apiKey}}" }],
+            "url": "{{baseUrl}}/tasks?status=open"
+          }
+        },
+        {
+          "name": "List Tasks By Status Archived",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-api-key", "value": "{{apiKey}}" }],
+            "url": "{{baseUrl}}/tasks?status=archived"
+          }
+        },
+        {
+          "name": "Task Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-api-key", "value": "{{apiKey}}" }],
+            "url": "{{baseUrl}}/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "Task Notification Attempts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-api-key", "value": "{{apiKey}}" }],
+            "url": "{{baseUrl}}/tasks/{{taskId}}/notifications"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Docs (Scalar)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "x-api-key", "value": "{{apiKey}}" }],
+        "url": "{{baseUrl}}/docs"
+      }
+    }
+  ]
+}
